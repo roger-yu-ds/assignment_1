@@ -49,7 +49,7 @@ def separate_target(df: pd.DataFrame,
     :return: a tuple of the features dataframe and the target series
     """
     X = df.copy(deep=True)
-    y = df.pop(target)
+    y = X.pop(target)
 
     return X, y
 
