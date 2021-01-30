@@ -3,6 +3,36 @@ assignment_1
 
 MDSI 36114 ADSI Assignment 1
 
+
+
+Data Dictionary
+[Kaggle link](https://www.kaggle.com/c/uts-advdsi-nba-career-prediction/data?select=sample_submission.csv)
+The name of the data is `uts-advdsi-nba-career-prediction`.
+----------------------------
+| column       | description                                         |
+|--------------|-----------------------------------------------------|
+| Id           | Player Identifier                                   |
+| GP           | Games Played                                        |
+| MIN          | Minutes Played                                      |
+| PTS          | Points Per Game                                     |
+| FGM          | Field Goals Made                                    |
+| FGA          | Field Goals Attempts                                |
+| FG%          | Field Goals Percent                                 |
+| 3P Made      | 3 Points Made                                       |
+| 3PA          | 3 Points Attempts                                   |
+| 3P%          | 3 Points Percent                                    |
+| FTM          | Free Throw Made                                     |
+| FTA          | Free Throw Attempts                                 |
+| FT%          | Free Throw Percent                                  |
+| OREB         | Offensive Rebounds                                  |
+| DREB         | Defensive Rebounds                                  |
+| REB          | Rebounds                                            |
+| AST          | Assists                                             |
+| STL          | Steals                                              |
+| BLK          | Blocks                                              |
+| TOV          | Turnovers                                           |
+| TARGET_5Yrs  | Outcome: 1 if career length >= 5 years, 0 otherwise |
+
 Project Organization
 ------------
 
