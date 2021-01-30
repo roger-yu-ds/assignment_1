@@ -8,6 +8,11 @@ matplotlib = "~=3.3.3"
 pandas = "~=1.2.0"
 jupyterlab = "~=3.0.5"
 sklearn = "*"
+kaggle = "*"
+pytest = "*"
+jupyter = "*"
+click = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
