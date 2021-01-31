@@ -54,6 +54,18 @@ def separate_target(df: pd.DataFrame,
     return X, y
 
 
+def make_adversarial_validation_dataset(df_train: pd.DatFrame,
+                                        df_test: pd.DataFrame,
+                                        n):
+    """
+    Creates a training and testing sets for adversarial validation
+    :param df_train:
+    :param df_test:
+    :param n:
+    :return:
+    """
+    pass
+
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
