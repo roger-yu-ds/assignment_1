@@ -54,7 +54,7 @@ def separate_target(df: pd.DataFrame,
     return X, y
 
 
-def make_adversarial_validation_dataset(df_train: pd.DatFrame,
+def make_adversarial_validation_dataset(df_train: pd.DataFrame,
                                         df_test: pd.DataFrame,
                                         n):
     """
@@ -65,6 +65,20 @@ def make_adversarial_validation_dataset(df_train: pd.DatFrame,
     :return:
     """
     pass
+
+
+def save_predictions(preds, pred_name, id_df, path):
+    """
+    Save the predictions of the model on to disk
+    :param preds:
+    :param id_df:
+    :param path:
+    :return:
+    """
+    pred_df = id_df.copy(deep=True)
+    pred_df.loc[:, pred_name] = preds
+    pred_df.to_csv(path, index=False)
+
 
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
