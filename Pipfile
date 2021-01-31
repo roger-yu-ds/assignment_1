@@ -17,9 +17,11 @@ jupyterlab = "*"
 src = {editable = true, path = "."}
 pandas-profiling = "*"
 seaborn = "*"
-
+lckr-jupyterlab-variableinspector = "*"
+xgboost = "*"
+catboost = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.9"
+python_version = "3.8"
