@@ -81,6 +81,9 @@ Project Organization
     │
     └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
 
+Kaggle API
+--------------------------
+For documentation on how to interact with the Kaggle API within Python, go to https://technowhisp.com/kaggle-api-python-documentation/.
 
 --------
 

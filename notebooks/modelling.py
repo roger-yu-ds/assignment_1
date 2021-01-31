@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[28]:
+# In[74]:
 
 
 import pandas as pd
 import numpy as np
 from pathlib import Path
+import os
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import RandomizedSearchCV
@@ -14,26 +15,49 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import confusion_matrix
 from sklearn.pipeline import Pipeline
 from scipy import stats
 from joblib import dump
 from joblib import load
 import xgboost as xgb
 import matplotlib.pyplot as plt
+from typing import Dict
+from src.data import make_dataset
+from kaggle.api.kaggle_api_extended import KaggleApi
+from dotenv import find_dotenv, load_dotenv
 
 
-# In[3]:
+# In[78]:
+
+
+load_dotenv(find_dotenv())
+api = KaggleApi()
+api.authenticate()
+
+
+# In[80]:
+
+
+competition = os.environ['COMPETITION']
+
+
+# # Set up directories
+
+# In[65]:
 
 
 project_dir = Path.cwd().parent
 data_dir = project_dir / 'data'
 raw_data_dir = data_dir / 'raw'
 interim_data_dir = data_dir / 'interim'
+processed_data_dir = data_dir / 'processed'
+models_dir = project_dir / 'models'
 
 
 # # Load data
 
-# In[34]:
+# In[57]:
 
 
 df_train = pd.read_csv(raw_data_dir / 'train.csv')
@@ -43,13 +67,14 @@ X_val = np.load(interim_data_dir / 'X_val.npy')
 y_train = np.load(interim_data_dir / 'y_train.npy')
 y_val = np.load(interim_data_dir / 'y_val.npy')
 X_test = np.load(interim_data_dir / 'X_test.npy')
+test_id = pd.read_csv(interim_data_dir / 'test_id.csv')
 
 
 # # Baseline
 # 
 # The base line prediction is simply to make them all negative.
 
-# In[19]:
+# In[36]:
 
 
 labels = 'Positive', 'Negative'
@@ -66,7 +91,7 @@ ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 plt.show()
 
 
-# In[22]:
+# In[37]:
 
 
 labels = 'Positive', 'Negative'
@@ -83,7 +108,7 @@ ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 plt.show()
 
 
-# In[21]:
+# In[38]:
 
 
 preds = [1] * len(y_val)
@@ -92,38 +117,38 @@ roc_auc_score(y_val, preds)
 
 # # XGB
 
-# In[23]:
+# In[39]:
 
 
 clf_xgb = xgb.XGBClassifier()
 
 
-# In[24]:
+# In[40]:
 
 
 clf_xgb.fit(X_train, y_train)
 
 
-# In[26]:
+# In[41]:
 
 
 preds = clf_xgb.predict(X_val)
 probs = clf_xgb.predict_proba(X_val)
 
 
-# In[32]:
+# In[42]:
 
 
 X_val.shape
 
 
-# In[35]:
+# In[43]:
 
 
 len(y_val)
 
 
-# In[39]:
+# In[44]:
 
 
 auc = roc_auc_score(y_val, probs[:, 1])
@@ -139,14 +164,14 @@ auc
 
 # # RandomizedSearchCV
 
-# In[35]:
+# In[45]:
 
 
 # test
 df_train.info()
 
 
-# In[38]:
+# In[46]:
 
 
 pipe = Pipeline([
@@ -173,21 +198,28 @@ cv = RandomizedSearchCV(
     estimator=pipe,
     param_distributions=param_dist,
     random_state=42,
-    n_iter=5,
+    n_iter=100,
     cv=5,
-    n_jobs=-1
+    n_jobs=7,
+    verbose=10
 )
 
 cv.fit(X_train, y_train)
 
 
-# In[41]:
+# In[60]:
+
+
+dump(cv, models_dir / 'randomised_xgb')
+
+
+# In[47]:
 
 
 pd.DataFrame(cv.cv_results_)
 
 
-# ## Predictions
+# ## Predictions with the best model
 
 # In[48]:
 
@@ -196,21 +228,80 @@ preds = cv.predict(X_val)
 probs = cv.predict_proba(X_val)
 
 
-# In[47]:
+# In[49]:
 
 
 len(probs[:, 1])
 
 
-# In[49]:
+# In[50]:
 
 
 fpr, tpr, thresholds = roc_curve(y_val, probs[:, 1])
 roc_auc_score(y_val, probs[:, 1])
 
 
-# In[ ]:
+# In[51]:
 
 
+confusion_matrix(y_val, preds)
 
+
+# ## Predict on test set
+
+# In[68]:
+
+
+preds = cv.predict(X_test)
+
+
+# ## Save predictions
+
+# In[81]:
+
+
+pred_name = 'TARGET_5Yrs'
+pred_path = processed_data_dir / 'preds_randomised_xgb.csv'
+make_dataset.save_predictions(preds, pred_name, test_id, pred_path)
+
+
+# In[83]:
+
+
+pred_path.stem
+
+
+# ## Submit predictions
+
+# In[85]:
+
+
+api.competition_submit(file_name=pred_path,
+                       message=pred_path.stem,
+                       competition=competition,
+                       quiet=False)
+
+
+# ## Predictions 2nd best model
+
+# There's a very small difference in the `mean_test_score`s of the first and second. The second ranked model uses only 2 `pca_n_components`. The best model on the training set might be overfitting due to the large number of components. Let's try the second best model on the validation set.
+
+# In[53]:
+
+
+type(cv)
+
+
+# In[61]:
+
+
+def get_parameters(cv: RandomizedSearchCV,
+                   step: str,
+                   nth: int) -> Dict[str, float]:
+    """
+    Extract the parameters of the non-first ranked model from a RandomizedSearchCV object,
+    so that they may be used to fit another model.
+    """
+    key_list = [key for key in cv.cv_results_.keys() if step in key]
+    return key_list
 
