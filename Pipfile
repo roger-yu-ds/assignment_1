@@ -4,15 +4,20 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-matplotlib = "~=3.3.3"
-pandas = "~=1.2.0"
-jupyterlab = "~=3.0.5"
+matplotlib = "*"
+pandas = "*"
 sklearn = "*"
 kaggle = "*"
 pytest = "*"
 jupyter = "*"
 click = "*"
 python-dotenv = "*"
+nodejs = "*"
+jupyterlab = "*"
+src = {editable = true, path = "."}
+pandas-profiling = "*"
+seaborn = "*"
+
 
 [dev-packages]
 
