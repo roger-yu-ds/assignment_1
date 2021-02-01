@@ -33,6 +33,27 @@ The name of the data is `uts-advdsi-nba-career-prediction`.
 | TOV          | Turnovers                                           |
 | TARGET_5Yrs  | Outcome: 1 if career length >= 5 years, 0 otherwise |
 
+Prerequisites
+------------
+* Python 3
+* Pip 
+* pipenv 
+
+Getting Started
+------------
+It is suggested that before starting this project, you create a virtual environment. By installing the `pipenv` package, this will be done automatically according to the pipfile. Then activate the environment accordingly
+```bash
+pip install pipenv
+pipenv shell
+```
+
+To install required packages:
+
+```bash
+ pipenv install -r requirements.txt
+```
+
+
 Project Organization
 ------------
 
