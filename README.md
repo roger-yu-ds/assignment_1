@@ -37,7 +37,8 @@ Prerequisites
 ------------
 * Python 3
 * Pip 
-* pipenv 
+* a kaggle account
+
 
 Getting Started
 ------------
@@ -53,6 +54,7 @@ To install required packages:
  pipenv install -r requirements.txt
 ```
 
+Ensure that you have retrieved a kaggle API key and store the resulting JSON file in `/user/.kaggle/kaggle.json`
 
 Project Organization
 ------------
