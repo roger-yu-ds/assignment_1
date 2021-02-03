@@ -35,7 +35,7 @@ def submit_predictions(classifier, X_test, test_id,message,pred_name='TARGET_5Yr
     load_dotenv(find_dotenv())
     api = KaggleApi()
     authenticate(api)
-    preds = classifier.predict(X_test)
+    preds = classifier.predict_proba(X_test)[:,1]
     submission = pd.DataFrame({'id':test_id,'TARGET_5Yrs': preds})
     submission.to_csv(pred_path, index = False)
     api.competition_submit(file_name=pred_path,
