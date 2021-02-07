@@ -5,8 +5,9 @@ from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 from kaggle.api.kaggle_api_extended import KaggleApi
 from zipfile import ZipFile
-from typing import Tuple
+from typing import Tuple, List
 import pandas as pd
+
 
 @click.command()
 @click.argument('input_filepath', type=click.Path(exists=True))
@@ -56,16 +57,32 @@ def separate_target(df: pd.DataFrame,
 
 def make_adversarial_validation_dataset(df_train: pd.DataFrame,
                                         df_test: pd.DataFrame,
-                                        n):
+                                        cols: List[str],
+                                        n: int = None):
     """
     Creates a training and testing sets for adversarial validation
-    :param df_train:
-    :param df_test:
-    :param n:
-    :return:
+    :param df_train: the original training dataframe
+    :param df_test: the original test dataframe
+    :param cols: the columns to be included in the adversarial data sets
+    :param n: the size of the adversarial data set, defaults to the size of the
+    original data
+    :return: a tuple of the adversarial training and test sets
     """
-    pass
+    if cols is None:
+        cols = df_train.columns
 
+    df = pd.concat([df_train[cols].assign(dataset='train'),
+                    df_test[cols].assign(dataset='test')])
+
+    # The number of test samples is the number of samples in the original
+    # test set
+    if n is None:
+        n = df_train.shape[1]
+
+    adv_train = df.sample(n=n, replace=False)
+    adv_test = df.loc[~df.index.isin(adv_train.index)]
+
+    return adv_train, adv_test
 
 def save_predictions(preds, pred_name, id_df, path):
     """
