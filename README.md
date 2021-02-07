@@ -42,7 +42,7 @@ Prerequisites
 
 Getting Started
 ------------
-It is suggested that before starting this project, you create a virtual environment. By installing the `pipenv` package, this will be done automatically according to the pipfile. Then activate the environment accordingly
+It is suggested that before starting this project, you create a virtual environment. By installing the `pipenv` package, this will be done automatically according to the pipfile. Then activate the environment accordingly:
 ```bash
 pip install pipenv
 pipenv shell
