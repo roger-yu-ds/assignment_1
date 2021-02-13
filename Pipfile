@@ -20,6 +20,8 @@ seaborn = "*"
 lckr-jupyterlab-variableinspector = "*"
 xgboost = "*"
 catboost = "*"
+imblearn = "*"
+imbalanced-learn = "*"
 
 [dev-packages]
 
