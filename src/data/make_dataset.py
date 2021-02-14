@@ -97,6 +97,65 @@ def save_predictions(preds, pred_name, id_df, path):
     pred_df.to_csv(path, index=False)
 
 
+def save_sets(X_train: pd.DataFrame, 
+              X_val: pd.DataFrame,
+              y_train: pd.Series,
+              y_val: pd.Series,
+              X_test: pd.DataFrame,
+              location,
+              suffix: str = '',
+              file_type: str = 'csv') -> None:
+    """
+    
+    """
+    # Cater for empty suffix and not having a dangling underscore
+    if suffix:
+        suffix = f'_{suffix}'
+
+    if file_type == 'csv':
+        X_train.to_csv(location / f'X_train{suffix}.{file_type}', index=False)
+        X_val.to_csv(location / f'X_val{suffix}.{file_type}', index=False)
+        y_train.to_csv(location / f'y_train{suffix}.{file_type}', index=False)
+        y_val.to_csv(location / f'y_val{suffix}.{file_type}', index=False)
+        X_test.to_csv(location / f'X_test{suffix}.{file_type}', index=False)
+    elif file_type == 'parquet':
+        X_train.to_parquet(location / f'X_train{suffix}.{file_type}', index=False)
+        X_val.to_parquet(location / f'X_val{suffix}.{file_type}', index=False)
+        y_train.to_parquet(location / f'y_train{suffix}.{file_type}', index=False)
+        y_val.to_parquet(location / f'y_val{suffix}.{file_type}', index=False)
+        X_test.to_parquet(location / f'X_test{suffix}.{file_type}', index=False)
+
+
+def load_sets(directory, suffix: str = '', file_type: str='csv') -> Tuple[
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.Series,
+    pd.Series,
+    pd.DataFrame
+]:
+    """
+    
+    """
+    # Cater for empty suffix and not having a dangling underscore
+    if suffix:
+        suffix = f'_{suffix}'
+
+    if file_type == 'csv':
+        X_train = pd.read_csv(directory / f'X_train{suffix}.{file_type}')
+        X_val = pd.read_csv(directory / f'X_val{suffix}.{file_type}')
+        y_train = pd.read_csv(directory / f'y_train{suffix}.{file_type}').squeeze()
+        y_val = pd.read_csv(directory / f'y_val{suffix}.{file_type}').squeeze()
+        X_test = pd.read_csv(directory / f'X_test{suffix}.{file_type}')
+    elif file_type == 'parquet':
+        X_train = pd.to_parquet(directory / f'X_train{suffix}.{file_type}')
+        X_val = pd.to_parquet(directory / f'X_val{suffix}.{file_type}')
+        y_train = pd.to_parquet(directory / f'y_train{suffix}.{file_type}').squeeze()
+        y_val = pd.to_parquet(directory / f'y_val{suffix}.{file_type}').squeeze()
+        X_test = pd.to_parquet(directory / f'X_test{suffix}.{file_type}')
+
+    return X_train, X_val, y_train, y_val, X_test
+
+
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
@@ -109,3 +168,5 @@ if __name__ == '__main__':
     load_dotenv(find_dotenv())
 
     main()
+
+
