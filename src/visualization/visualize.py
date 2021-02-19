@@ -1,5 +1,10 @@
 import sklearn.metrics as metr
 import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+from typing import List
+
+
 def classification_reports(classifier,X,y, verbose = False):
     """
     Retrieved from: https://www.kaggle.com/asiyehbahaloo/asiyeh-bahaloo
@@ -27,3 +32,109 @@ def classification_reports(classifier,X,y, verbose = False):
     plt.show()
     if verbose:
         return fpr,tpr,score
+
+
+def plot_pie(y):
+    labels = 'Positive', 'Negative'
+    pos_count = (y == 1).sum()
+    neg_count = (y == 0).sum()
+    sizes = [pos_count, neg_count]
+    explode = (0, 0.1)  # only "explode" the 2nd slice (i.e. 'Hogs')
+
+    fig1, ax1 = plt.subplots()
+    ax1.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%',
+            shadow=True, startangle=90)
+    ax1.axis(
+        'equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+    plt.show()
+
+
+def classification_reports_2(y, preds, probs, verbose=False):
+    """
+    Modification of classification_reports(). This function accepts predictions,
+    instead of conducting the prediction. This is useful because there are
+    other parameters used in the predict method that can't be passed into
+    classification_reports().
+
+    """
+
+    size_data = len(y)
+    count_class_1 = sum(y)
+    count_class_0 = size_data - count_class_1
+    print(' class 1 : ', count_class_1)
+    print(' class 0 : ', count_class_0)
+    fpr, tpr, thresholds = metr.roc_curve(y, probs)
+    print("Confusion Matrix: \n", metr.confusion_matrix(y, preds))
+    score = metr.accuracy_score(y, preds)
+    print("Accuracy: ", score)
+    auc = metr.roc_auc_score(y, probs)
+    print("AUC: ", auc)
+    print(metr.classification_report(y, preds))
+    plt.figure()
+    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    plt.plot(fpr, tpr, color='darkorange')
+    plt.show()
+    if verbose:
+        return fpr, tpr, score
+
+
+def create_feature_importance_df(
+        clf,
+        feature_names: List[str],
+        importance_types: List[str] = ['gain', 'cover', 'weight']
+) -> pd.DataFrame:
+    """
+    Convenience function to extract the importance values from the XGB
+    Classifier object
+    :param clf: an XGB Classifier object
+    :param feature_names: a list of human readable column names
+    :param importance_types: a list of the different types of importances to calculate
+    :return: pd.DataFrame
+    """
+    importance_df = pd.DataFrame()
+
+    # The XGB feature names are not interpretable
+    mapping_dict = dict(zip(clf.get_booster().feature_names, feature_names))
+
+    for importance_type in importance_types:
+        df = pd.DataFrame()
+        importance_dict = clf.get_booster().get_score(importance_type=importance_type)
+        df['feature'] = importance_dict.keys()
+        df['score'] = importance_dict.values()
+        df['importance_type'] = importance_type
+
+        importance_df = pd.concat([importance_df, df])
+
+    importance_df.loc[:, 'feature'] = importance_df.feature.map(mapping_dict)
+
+    return importance_df
+
+
+def plot_feature_importances(df: pd.DataFrame,
+                             top_n: int = 30,
+                             order_by: str = 'gain'):
+    """
+
+    :param df: a df of the format returned by `create_feature_importance_df`
+    :param top_n: take the top n features only
+    :param order_by: the chart will be sorted by one of the importance types
+    :return:
+    """
+
+    order = (
+        df
+        .query('importance_type == @order_by')
+        .sort_values(by='score', ascending=False)
+        .iloc[:top_n, 0]
+    )
+
+    ax = sns.catplot(x='score',
+                     y='feature',
+                     order=order,
+                     kind='bar',
+                     orient='horizontal',
+                     data=df,
+                     color='Grey',
+                     col='importance_type',
+                     sharex=False)
