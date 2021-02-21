@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import click
 import logging
+from pathlib import WindowsPath
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 from kaggle.api.kaggle_api_extended import KaggleApi
 from zipfile import ZipFile
 from typing import Tuple, List
 import pandas as pd
+from joblib import load
 
 
 @click.command()
@@ -163,6 +165,19 @@ def load_sets(directory, suffix: str = '', file_type: str = 'csv') -> Tuple[
     return X_train, X_val, y_train, y_val, X_test
 
 
+def load_estimators(path: WindowsPath) -> List[Tuple]:
+    """
+    Returns a list of estimators for the VotingClassifier
+    """
+    estimator_list = []
+    for suffix in ['*.joblib', '*.sav']:
+        for filepath in path.glob(suffix):
+            print(f'Loading {filepath.name}')
+            estimator_list.append((filepath.stem, load(filepath)))
+
+    return estimator_list
+
+
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
@@ -175,3 +190,4 @@ if __name__ == '__main__':
     load_dotenv(find_dotenv())
 
     main()
+
