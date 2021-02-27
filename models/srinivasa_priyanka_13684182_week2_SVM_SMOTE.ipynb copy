@@ -1,0 +1,817 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt\n",
+    "from sklearn.preprocessing import StandardScaler\n",
+    "from sklearn.metrics import roc_auc_score\n",
+    "import seaborn as sns\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "import xgboost as xgb"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df = pd.read_csv('/Users/priya/Downloads/train.csv')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(df['TARGET_5Yrs'].value_counts())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "target = df.pop('TARGET_5Yrs')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.drop('Id_old', axis=1, inplace=True)\n",
+    "df.drop('Id', axis=1, inplace=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>GP</th>\n",
+       "      <th>MIN</th>\n",
+       "      <th>PTS</th>\n",
+       "      <th>FGM</th>\n",
+       "      <th>FGA</th>\n",
+       "      <th>FG%</th>\n",
+       "      <th>3P Made</th>\n",
+       "      <th>3PA</th>\n",
+       "      <th>3P%</th>\n",
+       "      <th>FTM</th>\n",
+       "      <th>FTA</th>\n",
+       "      <th>FT%</th>\n",
+       "      <th>OREB</th>\n",
+       "      <th>DREB</th>\n",
+       "      <th>REB</th>\n",
+       "      <th>AST</th>\n",
+       "      <th>STL</th>\n",
+       "      <th>BLK</th>\n",
+       "      <th>TOV</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>80</td>\n",
+       "      <td>24.3</td>\n",
+       "      <td>7.8</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>6.4</td>\n",
+       "      <td>45.7</td>\n",
+       "      <td>0.1</td>\n",
+       "      <td>0.3</td>\n",
+       "      <td>22.6</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>2.9</td>\n",
+       "      <td>72.1</td>\n",
+       "      <td>2.2</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>3.8</td>\n",
+       "      <td>3.2</td>\n",
+       "      <td>1.1</td>\n",
+       "      <td>0.2</td>\n",
+       "      <td>1.6</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>75</td>\n",
+       "      <td>21.8</td>\n",
+       "      <td>10.5</td>\n",
+       "      <td>4.2</td>\n",
+       "      <td>7.9</td>\n",
+       "      <td>55.1</td>\n",
+       "      <td>-0.3</td>\n",
+       "      <td>-1.0</td>\n",
+       "      <td>34.9</td>\n",
+       "      <td>2.4</td>\n",
+       "      <td>3.6</td>\n",
+       "      <td>67.8</td>\n",
+       "      <td>3.6</td>\n",
+       "      <td>3.7</td>\n",
+       "      <td>6.6</td>\n",
+       "      <td>0.7</td>\n",
+       "      <td>0.5</td>\n",
+       "      <td>0.6</td>\n",
+       "      <td>1.4</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>85</td>\n",
+       "      <td>19.1</td>\n",
+       "      <td>4.5</td>\n",
+       "      <td>1.9</td>\n",
+       "      <td>4.5</td>\n",
+       "      <td>42.8</td>\n",
+       "      <td>0.4</td>\n",
+       "      <td>1.2</td>\n",
+       "      <td>34.3</td>\n",
+       "      <td>0.4</td>\n",
+       "      <td>0.6</td>\n",
+       "      <td>75.7</td>\n",
+       "      <td>0.6</td>\n",
+       "      <td>1.8</td>\n",
+       "      <td>2.4</td>\n",
+       "      <td>0.8</td>\n",
+       "      <td>0.4</td>\n",
+       "      <td>0.2</td>\n",
+       "      <td>0.6</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>63</td>\n",
+       "      <td>19.1</td>\n",
+       "      <td>8.2</td>\n",
+       "      <td>3.5</td>\n",
+       "      <td>6.7</td>\n",
+       "      <td>52.5</td>\n",
+       "      <td>0.3</td>\n",
+       "      <td>0.8</td>\n",
+       "      <td>23.7</td>\n",
+       "      <td>0.9</td>\n",
+       "      <td>1.5</td>\n",
+       "      <td>66.9</td>\n",
+       "      <td>0.8</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>1.8</td>\n",
+       "      <td>0.4</td>\n",
+       "      <td>0.1</td>\n",
+       "      <td>1.9</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>63</td>\n",
+       "      <td>17.8</td>\n",
+       "      <td>3.7</td>\n",
+       "      <td>1.7</td>\n",
+       "      <td>3.4</td>\n",
+       "      <td>50.8</td>\n",
+       "      <td>0.5</td>\n",
+       "      <td>1.4</td>\n",
+       "      <td>13.7</td>\n",
+       "      <td>0.2</td>\n",
+       "      <td>0.5</td>\n",
+       "      <td>54.0</td>\n",
+       "      <td>2.4</td>\n",
+       "      <td>2.7</td>\n",
+       "      <td>4.9</td>\n",
+       "      <td>0.4</td>\n",
+       "      <td>0.4</td>\n",
+       "      <td>0.6</td>\n",
+       "      <td>0.7</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>...</th>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7995</th>\n",
+       "      <td>32</td>\n",
+       "      <td>9.2</td>\n",
+       "      <td>1.8</td>\n",
+       "      <td>0.7</td>\n",
+       "      <td>1.8</td>\n",
+       "      <td>40.3</td>\n",
+       "      <td>-0.1</td>\n",
+       "      <td>-0.2</td>\n",
+       "      <td>23.1</td>\n",
+       "      <td>0.4</td>\n",
+       "      <td>0.6</td>\n",
+       "      <td>65.7</td>\n",
+       "      <td>0.3</td>\n",
+       "      <td>1.8</td>\n",
+       "      <td>1.9</td>\n",
+       "      <td>0.5</td>\n",
+       "      <td>0.3</td>\n",
+       "      <td>0.2</td>\n",
+       "      <td>0.4</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7996</th>\n",
+       "      <td>54</td>\n",
+       "      <td>6.0</td>\n",
+       "      <td>1.8</td>\n",
+       "      <td>0.7</td>\n",
+       "      <td>1.4</td>\n",
+       "      <td>48.7</td>\n",
+       "      <td>0.1</td>\n",
+       "      <td>0.1</td>\n",
+       "      <td>3.1</td>\n",
+       "      <td>0.2</td>\n",
+       "      <td>0.4</td>\n",
+       "      <td>70.1</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>1.1</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>0.1</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.3</td>\n",
+       "      <td>0.3</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7997</th>\n",
+       "      <td>85</td>\n",
+       "      <td>28.2</td>\n",
+       "      <td>10.7</td>\n",
+       "      <td>4.0</td>\n",
+       "      <td>9.0</td>\n",
+       "      <td>45.1</td>\n",
+       "      <td>0.2</td>\n",
+       "      <td>0.6</td>\n",
+       "      <td>23.6</td>\n",
+       "      <td>2.8</td>\n",
+       "      <td>3.9</td>\n",
+       "      <td>69.7</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>2.1</td>\n",
+       "      <td>3.1</td>\n",
+       "      <td>3.4</td>\n",
+       "      <td>1.2</td>\n",
+       "      <td>0.2</td>\n",
+       "      <td>1.8</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7998</th>\n",
+       "      <td>39</td>\n",
+       "      <td>7.7</td>\n",
+       "      <td>2.5</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>2.3</td>\n",
+       "      <td>40.1</td>\n",
+       "      <td>-0.3</td>\n",
+       "      <td>-0.5</td>\n",
+       "      <td>13.3</td>\n",
+       "      <td>0.6</td>\n",
+       "      <td>0.7</td>\n",
+       "      <td>74.3</td>\n",
+       "      <td>0.4</td>\n",
+       "      <td>0.6</td>\n",
+       "      <td>0.9</td>\n",
+       "      <td>0.2</td>\n",
+       "      <td>0.3</td>\n",
+       "      <td>0.3</td>\n",
+       "      <td>0.5</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7999</th>\n",
+       "      <td>49</td>\n",
+       "      <td>19.2</td>\n",
+       "      <td>4.8</td>\n",
+       "      <td>1.7</td>\n",
+       "      <td>5.1</td>\n",
+       "      <td>32.6</td>\n",
+       "      <td>0.7</td>\n",
+       "      <td>2.4</td>\n",
+       "      <td>41.3</td>\n",
+       "      <td>0.8</td>\n",
+       "      <td>1.3</td>\n",
+       "      <td>70.1</td>\n",
+       "      <td>0.1</td>\n",
+       "      <td>1.1</td>\n",
+       "      <td>1.2</td>\n",
+       "      <td>3.5</td>\n",
+       "      <td>0.9</td>\n",
+       "      <td>-0.3</td>\n",
+       "      <td>1.4</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>8000 rows × 19 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "      GP   MIN   PTS  FGM  FGA   FG%  3P Made  3PA   3P%  FTM  FTA   FT%  \\\n",
+       "0     80  24.3   7.8  3.0  6.4  45.7      0.1  0.3  22.6  2.0  2.9  72.1   \n",
+       "1     75  21.8  10.5  4.2  7.9  55.1     -0.3 -1.0  34.9  2.4  3.6  67.8   \n",
+       "2     85  19.1   4.5  1.9  4.5  42.8      0.4  1.2  34.3  0.4  0.6  75.7   \n",
+       "3     63  19.1   8.2  3.5  6.7  52.5      0.3  0.8  23.7  0.9  1.5  66.9   \n",
+       "4     63  17.8   3.7  1.7  3.4  50.8      0.5  1.4  13.7  0.2  0.5  54.0   \n",
+       "...   ..   ...   ...  ...  ...   ...      ...  ...   ...  ...  ...   ...   \n",
+       "7995  32   9.2   1.8  0.7  1.8  40.3     -0.1 -0.2  23.1  0.4  0.6  65.7   \n",
+       "7996  54   6.0   1.8  0.7  1.4  48.7      0.1  0.1   3.1  0.2  0.4  70.1   \n",
+       "7997  85  28.2  10.7  4.0  9.0  45.1      0.2  0.6  23.6  2.8  3.9  69.7   \n",
+       "7998  39   7.7   2.5  1.0  2.3  40.1     -0.3 -0.5  13.3  0.6  0.7  74.3   \n",
+       "7999  49  19.2   4.8  1.7  5.1  32.6      0.7  2.4  41.3  0.8  1.3  70.1   \n",
+       "\n",
+       "      OREB  DREB  REB  AST  STL  BLK  TOV  \n",
+       "0      2.2   2.0  3.8  3.2  1.1  0.2  1.6  \n",
+       "1      3.6   3.7  6.6  0.7  0.5  0.6  1.4  \n",
+       "2      0.6   1.8  2.4  0.8  0.4  0.2  0.6  \n",
+       "3      0.8   2.0  3.0  1.8  0.4  0.1  1.9  \n",
+       "4      2.4   2.7  4.9  0.4  0.4  0.6  0.7  \n",
+       "...    ...   ...  ...  ...  ...  ...  ...  \n",
+       "7995   0.3   1.8  1.9  0.5  0.3  0.2  0.4  \n",
+       "7996   1.0   1.1  2.0  0.1  0.0  0.3  0.3  \n",
+       "7997   1.0   2.1  3.1  3.4  1.2  0.2  1.8  \n",
+       "7998   0.4   0.6  0.9  0.2  0.3  0.3  0.5  \n",
+       "7999   0.1   1.1  1.2  3.5  0.9 -0.3  1.4  \n",
+       "\n",
+       "[8000 rows x 19 columns]"
+      ]
+     },
+     "execution_count": 5,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.columns = df.columns.str.strip()\n",
+    "df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#df_cleaned = df.drop(['FG%', '3P%', 'FT%'], axis = 1) "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.isnull().sum()\n",
+    "\n",
+    "duplicate = df.duplicated()\n",
+    "print(duplicate.sum())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from imblearn.over_sampling import SMOTE "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "scaler = StandardScaler()\n",
+    "df_cleaned = scaler.fit_transform(df)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Shape of X before SMOTE: (8000, 19)\n",
+      "Shape of X after SMOTE: (13338, 19)\n",
+      "\n",
+      "Balance of positive and negative classes (%):\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "1    50.0\n",
+       "0    50.0\n",
+       "Name: TARGET_5Yrs, dtype: float64"
+      ]
+     },
+     "execution_count": 9,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "sm = SMOTE(random_state=42)\n",
+    "\n",
+    "X_sm, y_sm = sm.fit_resample(df_cleaned, target)\n",
+    "\n",
+    "print(f'''Shape of X before SMOTE: {df.shape}\n",
+    "Shape of X after SMOTE: {X_sm.shape}''')\n",
+    "\n",
+    "print('\\nBalance of positive and negative classes (%):')\n",
+    "y_sm.value_counts(normalize=True) * 100"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X_train, X_test, y_train, y_test = train_test_split(X_sm, y_sm, test_size=0.2, random_state=8)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#X_train, X_test, y_train, y_test = train_test_split(df, target, test_size=0.2, random_state=8)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([[ 0.37633754, -0.87949075, -0.93669839, ..., -1.24637649,\n",
+       "        -0.00554072, -1.26806809],\n",
+       "       [-0.0945194 , -1.03111353, -1.03256468, ..., -1.10080177,\n",
+       "        -0.14765733, -1.0477545 ],\n",
+       "       [ 1.59029069,  1.04349704,  1.53594318, ...,  1.84325645,\n",
+       "         1.04117255,  1.71763572],\n",
+       "       ...,\n",
+       "       [-1.57559601,  0.11709992,  0.33856468, ..., -0.53090186,\n",
+       "         0.02740114,  0.66045036],\n",
+       "       [-0.22415727, -0.59866487, -0.58527364, ..., -0.66112901,\n",
+       "         0.01849247, -1.10524449],\n",
+       "       [-0.22069987, -1.20615771, -1.196511  , ..., -0.85546358,\n",
+       "        -0.17687585, -0.63294597]])"
+      ]
+     },
+     "execution_count": 12,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "X_test"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn import svm\n",
+    "\n",
+    "clf = svm.SVC(kernel='linear', probability = True) # Linear Kernel\n",
+    "#clf = svm.SVC(C = 10, gamma = 0.01, kernel = 'linear', probability = True)\n",
+    "#Train the model using the training sets\n",
+    "clf.fit(X_train, y_train)\n",
+    "\n",
+    "#Predict the response for test dataset\n",
+    "y_pred = clf.predict(X_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Accuracy: 0.6619190404797601\n"
+     ]
+    }
+   ],
+   "source": [
+    "from sklearn import metrics\n",
+    "\n",
+    "# Model Accuracy: how often is the classifier correct?\n",
+    "print(\"Accuracy:\",metrics.accuracy_score(y_test, y_pred))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Precision: 0.68578352180937\n",
+      "Recall: 0.6233480176211453\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"Precision:\",metrics.precision_score(y_test, y_pred))\n",
+    "\n",
+    "# Model Recall: what percentage of positive tuples are labelled as such?\n",
+    "print(\"Recall:\",metrics.recall_score(y_test, y_pred))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([[0.48785316, 0.51214684],\n",
+       "       [0.48277409, 0.51722591],\n",
+       "       [0.15935058, 0.84064942],\n",
+       "       ...,\n",
+       "       [0.70698182, 0.29301818],\n",
+       "       [0.5199803 , 0.4800197 ],\n",
+       "       [0.62588756, 0.37411244]])"
+      ]
+     },
+     "execution_count": 16,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "clf.score(X_test, y_test)\n",
+    "clf.predict_proba(X_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[[917 389]\n",
+      " [513 849]]\n"
+     ]
+    }
+   ],
+   "source": [
+    "from sklearn.metrics import confusion_matrix\n",
+    "confusion_matrix = confusion_matrix(y_test, y_pred)\n",
+    "print(confusion_matrix)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "              precision    recall  f1-score   support\n",
+      "\n",
+      "           0       0.64      0.70      0.67      1306\n",
+      "           1       0.69      0.62      0.65      1362\n",
+      "\n",
+      "    accuracy                           0.66      2668\n",
+      "   macro avg       0.66      0.66      0.66      2668\n",
+      "weighted avg       0.66      0.66      0.66      2668\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "from sklearn.metrics import classification_report\n",
+    "print(classification_report(y_test, y_pred))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.731666565473259"
+      ]
+     },
+     "execution_count": 19,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "roc=roc_auc_score(y_test, clf.predict_proba(X_test)[:,1])\n",
+    "roc"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#from sklearn.model_selection import GridSearchCV \n",
+    "#from sklearn.svm import SVC \n",
+    "  \n",
+    "# defining parameter range \n",
+    "#param_grid = {'C': [0.1, 1, 10, 100, 1000],  \n",
+    " #             'gamma': [1, 0.1, 0.01, 0.001, 0.0001], \n",
+    "  #            'kernel': ['rbf']}  \n",
+    "  \n",
+    "#grid = GridSearchCV(SVC(), param_grid, refit = True, verbose = 3) \n",
+    "  \n",
+    "# fitting the model for grid search \n",
+    "#grid.fit(X_train, y_train) "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# print best parameter after tuning \n",
+    "#print(grid.best_params_) \n",
+    "  \n",
+    "# print how our model looks after hyper-parameter tuning \n",
+    "#print(grid.best_estimator_) "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#grid_predictions = grid.predict(X_test) \n",
+    "  \n",
+    "# print classification report \n",
+    "#print(classification_report(y_test, grid_predictions)) "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#roc=roc_auc_score(y_test, xgb_cv.predict_proba(X_test)[:,1])\n",
+    "#roc\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df1 = pd.read_csv('/Users/priya/Downloads/test.csv')\n",
+    "df1.drop('Id', axis=1, inplace=True)\n",
+    "df1.drop('Id_old', axis=1, inplace=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#df2 = df1.drop(['FG%', '3P%', 'FT%'], axis = 1) \n",
+    "df1_cleaned = scaler.fit_transform(df1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "final = clf.predict_proba(df1_cleaned)[:,1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([0.5       , 0.46443241, 0.68956639, ..., 0.31197637, 0.81367904,\n",
+       "       0.37997486])"
+      ]
+     },
+     "execution_count": 27,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "final"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(final).to_csv(\"/Users/priya/Downloads/13684182_week2_svm_smote.csv\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.6"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
