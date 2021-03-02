@@ -3,16 +3,17 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from typing import List
+from sklearn.calibration import calibration_curve
 
 
-def classification_reports(classifier,X,y, verbose = False):
+def classification_reports(classifier, X, y, verbose=False):
     """
     Retrieved from: https://www.kaggle.com/asiyehbahaloo/asiyeh-bahaloo
     
     Provides Confusion matrix, accuracy, AUC and standard classification report. Note Verbose returns ROC curve values and accuracy
     
     """
-    y_pred = classifier.predict_proba(X)[:,1]
+    y_pred = classifier.predict_proba(X)[:, 1]
     y_pred_lab = classifier.predict(X)
     size_data = len(y)
     count_class_1 = sum(y)
@@ -20,18 +21,18 @@ def classification_reports(classifier,X,y, verbose = False):
     print(' class 1 : ', count_class_1)
     print(' class 0 : ', count_class_0)
     fpr, tpr, thresholds = metr.roc_curve(y, y_pred)
-    print("Confusion Matrix: \n",metr.confusion_matrix(y,y_pred_lab))
-    score=metr.accuracy_score(y,y_pred_lab)
-    print("Accuracy: ",score)
-    auc=metr.roc_auc_score(y,y_pred)
-    print("AUC: ",auc)
-    print(metr.classification_report(y,y_pred_lab))
+    print("Confusion Matrix: \n", metr.confusion_matrix(y, y_pred_lab))
+    score = metr.accuracy_score(y, y_pred_lab)
+    print("Accuracy: ", score)
+    auc = metr.roc_auc_score(y, y_pred)
+    print("AUC: ", auc)
+    print(metr.classification_report(y, y_pred_lab))
     plt.figure()
     plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-    plt.plot( fpr, tpr,color='darkorange')
+    plt.plot(fpr, tpr, color='darkorange')
     plt.show()
     if verbose:
-        return fpr,tpr,score
+        return fpr, tpr, score
 
 
 def plot_pie(y):
@@ -99,7 +100,8 @@ def create_feature_importance_df(
 
     for importance_type in importance_types:
         df = pd.DataFrame()
-        importance_dict = clf.get_booster().get_score(importance_type=importance_type)
+        importance_dict = clf.get_booster().get_score(
+            importance_type=importance_type)
         df['feature'] = importance_dict.keys()
         df['score'] = importance_dict.values()
         df['importance_type'] = importance_type
@@ -124,9 +126,9 @@ def plot_feature_importances(df: pd.DataFrame,
 
     order = (
         df
-        .query('importance_type == @order_by')
-        .sort_values(by='score', ascending=False)
-        .iloc[:top_n, 0]
+            .query('importance_type == @order_by')
+            .sort_values(by='score', ascending=False)
+            .iloc[:top_n, 0]
     )
 
     ax = sns.catplot(x='score',
@@ -138,3 +140,16 @@ def plot_feature_importances(df: pd.DataFrame,
                      color='Grey',
                      col='importance_type',
                      sharex=False)
+
+
+def plot_calibration_curve(y_true, probs, n_bins=5, normalize=False):
+    """
+
+    """
+    prob_true, prob_pred = calibration_curve(y_true,
+                                             probs,
+                                             n_bins=n_bins,
+                                             normalize=normalize)
+    plt.plot([0, 1], [0, 1], linestyle='--')
+    plt.plot(prob_true, prob_pred, marker='.')
+    plt.show()

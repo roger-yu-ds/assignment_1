@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import click
 import logging
+from pathlib import WindowsPath
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 from kaggle.api.kaggle_api_extended import KaggleApi
 from zipfile import ZipFile
 from typing import Tuple, List
 import pandas as pd
+from joblib import load
 
 
 @click.command()
@@ -57,7 +59,7 @@ def separate_target(df: pd.DataFrame,
 
 def make_adversarial_validation_dataset(df_train: pd.DataFrame,
                                         df_test: pd.DataFrame,
-                                        cols: List[str],
+                                        cols: List[str] = None,
                                         n: int = None):
     """
     Creates a training and testing sets for adversarial validation
@@ -77,12 +79,13 @@ def make_adversarial_validation_dataset(df_train: pd.DataFrame,
     # The number of test samples is the number of samples in the original
     # test set
     if n is None:
-        n = df_train.shape[1]
+        n = df_train.shape[0]
 
     adv_train = df.sample(n=n, replace=False)
     adv_test = df.loc[~df.index.isin(adv_train.index)]
 
     return adv_train, adv_test
+
 
 def save_predictions(preds, pred_name, id_df, path):
     """
@@ -97,7 +100,7 @@ def save_predictions(preds, pred_name, id_df, path):
     pred_df.to_csv(path, index=False)
 
 
-def save_sets(X_train: pd.DataFrame, 
+def save_sets(X_train: pd.DataFrame,
               X_val: pd.DataFrame,
               y_train: pd.Series,
               y_val: pd.Series,
@@ -119,14 +122,17 @@ def save_sets(X_train: pd.DataFrame,
         y_val.to_csv(location / f'y_val{suffix}.{file_type}', index=False)
         X_test.to_csv(location / f'X_test{suffix}.{file_type}', index=False)
     elif file_type == 'parquet':
-        X_train.to_parquet(location / f'X_train{suffix}.{file_type}', index=False)
+        X_train.to_parquet(location / f'X_train{suffix}.{file_type}',
+                           index=False)
         X_val.to_parquet(location / f'X_val{suffix}.{file_type}', index=False)
-        y_train.to_parquet(location / f'y_train{suffix}.{file_type}', index=False)
+        y_train.to_parquet(location / f'y_train{suffix}.{file_type}',
+                           index=False)
         y_val.to_parquet(location / f'y_val{suffix}.{file_type}', index=False)
-        X_test.to_parquet(location / f'X_test{suffix}.{file_type}', index=False)
+        X_test.to_parquet(location / f'X_test{suffix}.{file_type}',
+                          index=False)
 
 
-def load_sets(directory, suffix: str = '', file_type: str='csv') -> Tuple[
+def load_sets(directory, suffix: str = '', file_type: str = 'csv') -> Tuple[
     pd.DataFrame,
     pd.DataFrame,
     pd.Series,
@@ -143,17 +149,33 @@ def load_sets(directory, suffix: str = '', file_type: str='csv') -> Tuple[
     if file_type == 'csv':
         X_train = pd.read_csv(directory / f'X_train{suffix}.{file_type}')
         X_val = pd.read_csv(directory / f'X_val{suffix}.{file_type}')
-        y_train = pd.read_csv(directory / f'y_train{suffix}.{file_type}').squeeze()
+        y_train = pd.read_csv(
+            directory / f'y_train{suffix}.{file_type}').squeeze()
         y_val = pd.read_csv(directory / f'y_val{suffix}.{file_type}').squeeze()
         X_test = pd.read_csv(directory / f'X_test{suffix}.{file_type}')
     elif file_type == 'parquet':
         X_train = pd.to_parquet(directory / f'X_train{suffix}.{file_type}')
         X_val = pd.to_parquet(directory / f'X_val{suffix}.{file_type}')
-        y_train = pd.to_parquet(directory / f'y_train{suffix}.{file_type}').squeeze()
-        y_val = pd.to_parquet(directory / f'y_val{suffix}.{file_type}').squeeze()
+        y_train = pd.to_parquet(
+            directory / f'y_train{suffix}.{file_type}').squeeze()
+        y_val = pd.to_parquet(
+            directory / f'y_val{suffix}.{file_type}').squeeze()
         X_test = pd.to_parquet(directory / f'X_test{suffix}.{file_type}')
 
     return X_train, X_val, y_train, y_val, X_test
+
+
+def load_estimators(path: WindowsPath) -> List[Tuple]:
+    """
+    Returns a list of estimators for the VotingClassifier
+    """
+    estimator_list = []
+    for suffix in ['*.joblib', '*.sav']:
+        for filepath in path.glob(suffix):
+            print(f'Loading {filepath.name}')
+            estimator_list.append((filepath.stem, load(filepath)))
+
+    return estimator_list
 
 
 if __name__ == '__main__':
@@ -168,5 +190,4 @@ if __name__ == '__main__':
     load_dotenv(find_dotenv())
 
     main()
-
 

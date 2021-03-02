@@ -56,6 +56,12 @@ To install required packages:
 
 Ensure that you have retrieved a kaggle API key and store the resulting JSON file in `/user/.kaggle/kaggle.json`
 
+Best Model
+-------------
+The best model is an SVM Classifier with a public and private test AUC of 0.705
+and 0.699 respectively, see the [jupyter notebook in GitHub](https://github.com/roger-yu-ds/assignment_1/blob/master/models/srinivasa_priyanka_13684182_week2_SVM_SMOTE.ipynb%20copy).
+
+
 Project Organization
 ------------
 
